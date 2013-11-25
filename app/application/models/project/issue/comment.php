@@ -51,7 +51,31 @@ class Comment extends  \Eloquent {
 		$issue->updated_by = \Auth::user()->id;
 		$issue->save();
 
+		\Project\Issue\Comment::send_email($issue, $input['comment'], \Auth::user()->firstname . ' ' . \Auth::user()->lastname);
 		return $comment;
+	}
+
+
+	/**
+	* Send a email notificando 
+	*
+	* @param \Project\Issue    $issue
+	* @param string    $comment
+	* @return bool
+	*/
+	public static function send_email($issue, $comment, $author)
+	{
+		$text = \View::make('email.commented_issue', array(
+        	'firstname' => $issue->assigned->firstname,
+        	'issue_id' => $issue->id,
+        	'issue' => $issue->title,
+        	'author' => $author,
+        	'comment' => $comment,
+       ));
+		$to = $issue->assigned->email;
+		$subject = 'Chamado ' . $issue->id . ' atualizado!';
+		\Mail::send_email($text, $to, $subject);
+		return true;
 	}
 
 	/**
